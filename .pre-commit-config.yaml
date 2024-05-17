@@ -1,0 +1,18 @@
+repos:
+  - repo: https://github.com/aws-cloudformation/cfn-lint
+    rev: v1.2.5a9
+    hooks:
+      - id: cfn-python-lint
+        args: ["--ignore-checks", "W2030"]
+        files: \.yaml$
+
+  - repo: https://github.com/stelligent/cfn_nag
+    rev: v0.8.10
+    hooks:
+      - id: cfn-nag
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: "v4.6.0"
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
