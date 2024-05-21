@@ -60,7 +60,7 @@ def lambda_handler(event, context):
         
         # Retrieve email from DynamoDB
         recipient_email = get_email_from_dynamodb(api_key)
-        # recipient_email = "israel7manuel@gmail.com"
+
         logger.info(f"Emails {sender_email}, {recipient_email}")
         if not recipient_email:
             raise Exception("Failed to retrieve recipient email")
