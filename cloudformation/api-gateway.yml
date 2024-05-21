@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  ApiGatewayRestApi:
+    Type: 'AWS::ApiGateway::RestApi'
+    Properties:
+      Name: 'EmailApi'
+  
+  ApiGatewayResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+          - ApiGatewayRestApi
+          - RootResourceId
+      PathPart: 'send-email'
+      RestApiId: !Ref 'ApiGatewayRestApi'
+  
+  ApiGatewayMethod:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      AuthorizationType: 'NONE'
+      HttpMethod: 'POST'
+      ResourceId: !Ref 'ApiGatewayResource'
+      RestApiId: !Ref 'ApiGatewayRestApi'
+      Integration:
+        IntegrationHttpMethod: 'POST'
+        Type: 'AWS_PROXY'
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${!ImportValue EmailLambdaFunctionArn}/invocations'
+        RequestTemplates:
+          application/json: |
+            {
+              "params": {
+                "header": {
+                  "x-api-key": "$input.params('x-api-key')"
+                }
+              },
+              "body-json": $input.json('$')
+            }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+      RequestParameters:
+        method.request.header.x-api-key: true
+
+  ApiGatewayDeployment:
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref 'ApiGatewayRestApi'
+      StageName: 'staging'
+
+  ApiGatewayUsagePlan:
+    Type: 'AWS::ApiGateway::UsagePlan'
+    Properties:
+      UsagePlanName: 'EmailApiUsagePlan'
+      ApiStages:
+        - ApiId: !Ref 'ApiGatewayRestApi'
+          Stage: 'staging'
+  
+  ApiGatewayApiKey:
+    Type: 'AWS::ApiGateway::ApiKey'
+    Properties:
+      Enabled: true
+      Name: 'EmailApiKey'
+      StageKeys:
+        - RestApiId: !Ref 'ApiGatewayRestApi'
+          StageName: 'staging'
+  
+  ApiGatewayUsagePlanKey:
+    Type: 'AWS::ApiGateway::UsagePlanKey'
+    Properties:
+      KeyId: !Ref 'ApiGatewayApiKey'
+      KeyType: 'API_KEY'
+      UsagePlanId: !Ref 'ApiGatewayUsagePlan'
+
+Outputs:
+  ApiKey:
+    Value: !Ref ApiGatewayApiKey
+    Export:
+      Name: ApiKey
+  ApiUrl:
+    Value: !Sub 'https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/staging/send-email'
+    Export:
+      Name: ApiUrl

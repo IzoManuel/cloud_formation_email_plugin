@@ -31,7 +31,7 @@ Resources:
               - Effect: 'Allow'
                 Action:
                   - 'dynamodb:GetItem'
-                Resource: !GetAtt EmailApiKeyTable.Arn
+                Resource: !ImportValue ApiKeyEmailTableArn
         - PolicyName: 'LambdaSESPolicy'
           PolicyDocument:
             Version: '2012-10-17'
@@ -42,5 +42,7 @@ Resources:
                   - 'ses:SendRawEmail'
                 Resource: '*'
 Outputs:
-  LambdaFunctionArn:
+  EmailLambdaFunctionArn:
     Value: !GetAtt EmailLambdaFunction.Arn
+    Export:
+      Name: EmailLambdaFunctionArn
