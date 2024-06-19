@@ -4,7 +4,7 @@ Resources:
     Type: 'AWS::ApiGateway::RestApi'
     Properties:
       Name: 'EmailApi'
-  
+
   ApiGatewayResource:
     Type: 'AWS::ApiGateway::Resource'
     Properties:
@@ -14,9 +14,10 @@ Resources:
           - RootResourceId
       PathPart: 'send-email'
       RestApiId: !Ref 'ApiGatewayRestApi'
-  
+
   ApiGatewayMethod:
     Type: 'AWS::ApiGateway::Method'
+    DependsOn: ApiGatewayResource
     Properties:
       AuthorizationType: 'NONE'
       HttpMethod: 'POST'
@@ -24,8 +25,10 @@ Resources:
       RestApiId: !Ref 'ApiGatewayRestApi'
       Integration:
         IntegrationHttpMethod: 'POST'
-        Type: 'AWS_PROXY'
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${!ImportValue EmailLambdaFunctionArn}/invocations'
+        Type: 'AWS'
+        Uri: !Sub
+          - 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations'
+          - lambdaArn: !ImportValue EmailLambdaFunctionArn
         RequestTemplates:
           application/json: |
             {
@@ -53,29 +56,33 @@ Resources:
 
   ApiGatewayDeployment:
     Type: 'AWS::ApiGateway::Deployment'
+    DependsOn: ApiGatewayMethod
     Properties:
       RestApiId: !Ref 'ApiGatewayRestApi'
-      StageName: 'staging'
+      StageName: 'dev'
 
   ApiGatewayUsagePlan:
     Type: 'AWS::ApiGateway::UsagePlan'
+    DependsOn: ApiGatewayDeployment
     Properties:
       UsagePlanName: 'EmailApiUsagePlan'
       ApiStages:
         - ApiId: !Ref 'ApiGatewayRestApi'
-          Stage: 'staging'
-  
+          Stage: 'dev'
+
   ApiGatewayApiKey:
     Type: 'AWS::ApiGateway::ApiKey'
+    DependsOn: ApiGatewayUsagePlan
     Properties:
       Enabled: true
       Name: 'EmailApiKey'
       StageKeys:
         - RestApiId: !Ref 'ApiGatewayRestApi'
-          StageName: 'staging'
-  
+          StageName: 'dev'
+
   ApiGatewayUsagePlanKey:
     Type: 'AWS::ApiGateway::UsagePlanKey'
+    DependsOn: ApiGatewayApiKey
     Properties:
       KeyId: !Ref 'ApiGatewayApiKey'
       KeyType: 'API_KEY'
@@ -87,6 +94,6 @@ Outputs:
     Export:
       Name: ApiKey
   ApiUrl:
-    Value: !Sub 'https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/staging/send-email'
+    Value: !Sub 'https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/dev/send-email'
     Export:
       Name: ApiUrl
