@@ -7,8 +7,8 @@ Resources:
       Handler: 'email_handler.lambda_handler'
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
-        S3Bucket: 'test-bucket-manuel'
-        S3Key: 'lambda/email_handler.zip'
+        S3Bucket: cloudformation-templates-shared
+        S3Key: email-plugin/email_handler.zip
       Runtime: 'python3.8'
       Timeout: 30
 
