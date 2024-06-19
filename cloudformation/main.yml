@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  EmailDynamoDB:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: 'https://test-bucket-manuel.s3.amazonaws.com/email-plugin/dynamodb.yml'
+
+  EmailLambda:
+    Type: 'AWS::CloudFormation::Stack'
+    DependsOn: EmailDynamoDB
+    Properties:
+      TemplateURL: 'https://test-bucket-manuel.s3.amazonaws.com/email-plugin/lambda.yml'
+
+  EmailApiGateway:
+    Type: 'AWS::CloudFormation::Stack'
+    DependsOn: EmailLambda
+    Properties:
+      TemplateURL: 'https://test-bucket-manuel.s3.amazonaws.com/email-plugin/api-gateway.yml'
+
+# Outputs:
+#   ApiKey:
+#     Value: !ImportValue ApiKey
+#   ApiUrl:
+#     Value: !ImportValue ApiUrl
+#   EmailLambdaFunctionArn:
+#     Value: !ImportValue EmailLambdaFunctionArn
